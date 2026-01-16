@@ -19,7 +19,36 @@ enum AccountType {
   REVENUE
 }
 
-enum TransactionType {
+enum TransactionStatus {
   POSTED
   REVERSED
+}
+
+model Account {
+  id        String        @id @default(uuid())
+  type      AccountType
+  currency  String
+  createdAt DateTime      @default(now())
+  entries   LedgerEntry[]
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  reference String            @unique
+  status    TransactionStatus @default(POSTED)
+  createdAt DateTime          @default(now())
+  entries   LedgerEntry[]
+}
+
+model LedgerEntry {
+  id String @id @default(uuid())
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String
+
+  account   Account? @relation(fields: [accountId], references: [id])
+  accountId String?
+
+  amount    Decimal  @db.Decimal(18, 4)
+  createdAt DateTime @default(now())
 }
