@@ -44,12 +44,21 @@ model Transaction {
 model LedgerEntry {
   id String @id @default(uuid())
 
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
   transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
 
-  account   Account? @relation(fields: [accountId], references: [id])
   accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
 
   amount    Decimal  @db.Decimal(18, 4)
   createdAt DateTime @default(now())
+}
+
+model BalanceSnapshot {
+  id         String   @id @default(uuid())
+  balance    Decimal  @db.Decimal(18, 4)
+  snapshotAt DateTime @default(now())
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
 }
