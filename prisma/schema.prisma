@@ -25,11 +25,12 @@ enum TransactionStatus {
 }
 
 model Account {
-  id        String        @id @default(uuid())
-  type      AccountType
-  currency  String
-  createdAt DateTime      @default(now())
-  entries   LedgerEntry[]
+  id               String            @id @default(uuid())
+  type             AccountType
+  currency         String
+  createdAt        DateTime          @default(now())
+  entries          LedgerEntry[]
+  balanceSnapshots BalanceSnapshot[]
 }
 
 model Transaction {
