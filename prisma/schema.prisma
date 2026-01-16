@@ -12,3 +12,14 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  REVENUE
+}
+
+enum TransactionType {
+  POSTED
+  REVERSED
+}
