@@ -31,6 +31,8 @@ model Account {
   createdAt        DateTime          @default(now())
   entries          LedgerEntry[]
   balanceSnapshots BalanceSnapshot[]
+
+  @@index([currency])
 }
 
 model Transaction {
@@ -52,6 +54,9 @@ model LedgerEntry {
 
   amount    Decimal  @db.Decimal(18, 4)
   createdAt DateTime @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([transactionId])
 }
 
 model BalanceSnapshot {
@@ -61,4 +66,6 @@ model BalanceSnapshot {
 
   accountId String
   account   Account @relation(fields: [accountId], references: [id])
+
+  @@unique([accountId, snapshotAt])
 }
