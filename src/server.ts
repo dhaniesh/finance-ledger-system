@@ -10,24 +10,29 @@ const app = express()
 app.use(express.json())
 
 app.post("/transactions", async (req: Request, res: Response) => {
-    const input = CreateTransactionSchema.parse(req.body)
-    try {
-        return await prismaClient.$transaction(async (tx) => {
-            const transaction = await tx.transaction.create({
-                data: { reference: input.reference }
-            });
-            await tx.ledgerEntry.createMany({
-                data: input.entries.map((e) => ({
-                    transactionId: transaction.id,
-                    accountId: e.accountId,
-                    amount: new Prisma.Decimal(e.amount)
-                }))
-            });
-            return transaction;
-        })
+    const { success, data, error } = CreateTransactionSchema.safeParse(req.body)
+    if (!success) {
+        res.status(400).json({ "success": false, error: JSON.parse(error.message) })
     }
-    catch (err) {
-        console.error("Error creating transaction:", err);
+    else {
+        try {
+            return await prismaClient.$transaction(async (tx) => {
+                const transaction = await tx.transaction.create({
+                    data: { reference: data.reference }
+                });
+                await tx.ledgerEntry.createMany({
+                    data: data.entries.map((e) => ({
+                        transactionId: transaction.id,
+                        accountId: e.accountId,
+                        amount: new Prisma.Decimal(e.amount)
+                    }))
+                });
+                return transaction;
+            })
+        }
+        catch (err) {
+            console.error("Error creating transaction:", err);
+        }
     }
 })
 
@@ -43,6 +48,6 @@ app.get("/accounts/:id/entries", (req: Request, res: Response) => {
     res.json();
 })
 
-app.listen(() => {
+app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)
 })
