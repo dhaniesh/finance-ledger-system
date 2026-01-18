@@ -87,8 +87,43 @@ app.post("/transactions/:id/reverse", async (req: Request, res: Response) => {
     }
 })
 
-app.get("/accounts/:id/balance", (req: Request, res: Response) => {
-    res.json();
+app.get("/accounts/:id/balance", async (req: Request, res: Response) => {
+    const accountId = String(req.params.id);
+
+    // find account
+    const account = await prismaClient.account.findUnique({
+        where: { id: accountId }
+    })
+    if (!account) {
+        res.status(400).json({ "success": false, error: "Account not found" });
+        return;
+    }
+
+    // fetch balance snapshot
+    const snapshot = await prismaClient.balanceSnapshot.findFirst({
+        where: { accountId },
+        orderBy: { snapshotAt: "desc" }
+    })
+
+    // aggregate the ledger entries
+    const aggregation = await prismaClient.ledgerEntry.aggregate({
+        _sum: { amount: true },
+        where: {
+            accountId,
+            ...(snapshot && { createdAt: { gt: snapshot?.snapshotAt } })
+        }
+    });
+    const delta = aggregation._sum.amount ?? new Prisma.Decimal(0)
+    const snapshotBalance = snapshot?.balance ?? new Prisma.Decimal(0)
+
+    const balance = snapshotBalance.plus(delta)
+    res.status(200).json({
+        success: true,
+        data: {
+            accountId,
+            balance: balance.toString()
+        }
+    })
 })
 
 app.get("/accounts/:id/entries", (req: Request, res: Response) => {
